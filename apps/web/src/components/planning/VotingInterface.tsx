@@ -1,0 +1,176 @@
+'use client';
+
+import React, { useState } from 'react';
+import { usePlanning } from './PlanningSessionProvider';
+import { Vote } from '@/types/planning';
+
+const FIBONACCI_SCALE = ['0', '1', '2', '3', '5', '8', '13', '21', '34', '55', '89', '∞', '?'];
+const TSHIRT_SCALE = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '∞', '?'];
+
+interface VotingInterfaceProps {
+  className?: string;
+}
+
+export function VotingInterface({ className }: VotingInterfaceProps) {
+  const { state, actions } = usePlanning();
+  const [selectedValue, setSelectedValue] = useState<string | null>(null);
+
+  if (!state.session || !state.session.currentStoryId) {
+    return (
+      <div className={`flex items-center justify-center p-8 ${className || ''}`}>
+        <p className="text-gray-500">No story selected for voting</p>
+      </div>
+    );
+  }
+
+  const votingScale = state.session.settings.votingScale === 'fibonacci' 
+    ? FIBONACCI_SCALE 
+    : TSHIRT_SCALE;
+
+  const isVotingPhase = state.session.state === 'voting';
+  const isRevealPhase = state.session.state === 'revealing';
+
+  const handleVote = (value: string) => {
+    if (!isVotingPhase || state.hasVoted) return;
+    
+    setSelectedValue(value);
+    actions.castVote(value);
+  };
+
+  const handleRevealVotes = () => {
+    actions.revealVotes();
+  };
+
+  if (isRevealPhase) {
+    return (
+      <div className={`space-y-6 ${className || ''}`}>
+        <VotingResults />
+        <div className="flex justify-center space-x-4">
+          <button 
+            onClick={actions.resetVoting}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            Vote Again
+          </button>
+          <button 
+            onClick={() => actions.selectStory('')}
+            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            Next Story
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`space-y-6 ${className || ''}`}>
+      {/* Voting Cards */}
+      <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+        {votingScale.map((value) => (
+          <div
+            key={value}
+            className={`
+              cursor-pointer transition-all duration-200 hover:scale-105
+              aspect-[2/3] min-h-[80px]
+              ${selectedValue === value ? 'ring-2 ring-indigo-500' : ''}
+              ${state.hasVoted && selectedValue !== value ? 'opacity-50' : ''}
+              ${!isVotingPhase ? 'cursor-not-allowed opacity-50' : ''}
+              bg-white rounded-lg shadow-md flex items-center justify-center p-2
+            `}
+            onClick={() => handleVote(value)}
+          >
+            <span className="text-2xl font-bold text-indigo-600">
+              {value}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Voting Status */}
+      <div className="text-center space-y-4">
+        {state.hasVoted ? (
+          <div className="space-y-2">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              Vote Cast: {selectedValue}
+            </span>
+            <p className="text-sm text-gray-500">
+              Waiting for other participants...
+            </p>
+          </div>
+        ) : (
+          <p className="text-gray-500">
+            Select your estimate for this story
+          </p>
+        )}
+        
+        {/* Scrum Master Controls */}
+        {state.session.scrumMasterId === 'current-user-id' && (
+          <div className="flex justify-center space-x-4">
+            <button 
+              onClick={handleRevealVotes}
+              disabled={!Object.keys(state.session.votes || {}).length}
+              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Reveal Votes
+            </button>
+            <button 
+              onClick={actions.resetVoting}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Reset Voting
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function VotingResults() {
+  const { state } = usePlanning();
+  
+  if (!state.session || !state.session.currentStoryId) return null;
+  
+  const votes = state.session.votes || {};
+  const values = Object.values(votes)
+    .map((v: Vote) => parseFloat(v.value))
+    .filter(v => !isNaN(v));
+  
+  if (values.length === 0) return null;
+  
+  const average = values.reduce((a, b) => a + b, 0) / values.length;
+  const sorted = values.sort((a, b) => a - b);
+  const median = sorted[Math.floor(sorted.length / 2)];
+  
+  return (
+    <div className="bg-white rounded-lg shadow-md p-6">
+      <h3 className="text-lg font-medium text-gray-900 mb-4">Voting Results</h3>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <p className="text-sm text-gray-500">Average</p>
+          <p className="text-2xl font-bold text-indigo-600">{average.toFixed(1)}</p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500">Median</p>
+          <p className="text-2xl font-bold text-indigo-600">{median}</p>
+        </div>
+      </div>
+      
+      <div className="mt-6">
+        <p className="text-sm text-gray-500 mb-2">Votes</p>
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(votes).map(([userId, vote]: [string, Vote]) => (
+            <span 
+              key={userId}
+              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
+            >
+              {vote.value}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+} 
