@@ -13,11 +13,13 @@
     "seed": "ts-node src/seed.ts"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "dotenv": "^16.5.0",
     "drizzle-orm": "^0.29.3",
-    "pg": "^8.11.3"
+    "pg": "^8.10.0"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/pg": "^8.10.9",
     "rimraf": "^5.0.5",
     "ts-node": "^10.9.2",

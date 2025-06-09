@@ -1,5 +1,5 @@
 {
-  "name": "turborepo-shadcn-tailwind-v4",
+  "name": "agile-hub",
   "private": true,
   "scripts": {
     "build": "turbo run build",
@@ -9,6 +9,7 @@
     "check-types": "turbo run check-types"
   },
   "devDependencies": {
+    "dotenv-cli": "^8.0.0",
     "prettier": "^3.5.0",
     "turbo": "^2.4.4",
     "typescript": "5.7.3"

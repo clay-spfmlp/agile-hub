@@ -1,0 +1,38 @@
+{
+  "name": "@repo/auth",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": "^18 || ^19",
+    "react-dom": "^18 || ^19",
+    "next": "^15"
+  },
+  "dependencies": {
+    "@repo/ui": "workspace:*", 
+    "@hookform/resolvers": "^5.1.0",
+    "lucide-react": "^0.513.0",
+    "react-hook-form": "^7.57.0",
+    "zod": "^3.25.56"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./components/*": "./src/components/*.tsx",
+    "./contexts/*": "./src/contexts/*.tsx",
+    "./hooks/*": "./src/hooks/*.ts",
+    "./types/*": "./src/types/*.ts",
+    "./lib/*": "./src/lib/*.ts"
+  }
+} 
