@@ -1,5 +1,6 @@
-// Database entity types (temporary - will be imported from @repo/database later)
+// Database entity types
 export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'SCRUM_MASTER' | 'DEVELOPER' | 'TESTER' | 'BUSINESS_ANALYST' | 'STAKEHOLDER' | 'USER';
+
 export type ReleaseStatus = 'PLANNING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
 export type SprintStatus = 'PLANNING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
 export type StoryStatus = 'BACKLOG' | 'READY' | 'IN_PROGRESS' | 'DONE' | 'REJECTED';
@@ -7,12 +8,11 @@ export type StoryPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'HIGHEST';
 
 // Core database entities
 export interface User {
-  id: string;
-  email?: string;
+  id: number;
+  email: string;
   name: string;
+  password: string;
   role: UserRole;
-  avatar?: string;
-  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,6 +24,14 @@ export interface Team {
   scrumMasterId?: number;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface TeamMember {
+  id: number;
+  teamId: number;
+  userId: number;
+  role: string;
+  createdAt: Date;
 }
 
 export interface Release {
@@ -49,35 +57,34 @@ export interface Sprint {
   startDate?: Date;
   endDate?: Date;
   status: SprintStatus;
-  capacity?: number;
-  velocity?: number;
+  capacity?: number; // Total story points capacity
+  velocity?: number; // Actual completed story points
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface Story {
-  id: string;
+  id: number;
+  sessionId?: number;
+  sprintId?: number;
   title: string;
   description?: string;
-  acceptance?: string;
-  storyPoints?: number;
+  acceptanceCriteria?: string;
   priority: StoryPriority;
+  storyPoints?: number;
   status: StoryStatus;
-  createdById: string;
-  sessionId?: string;
-  sprintId?: string;
-  assigneeId?: string;
+  assigneeId?: number;
+  createdById?: number;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface Vote {
-  id: string;
-  userId: string;
-  sessionId: string;
-  storyId: string;
+  id: number;
+  storyId: number;
+  userId: number;
   value: string;
-  confidence?: number;
+  confidence: number;
   createdAt: Date;
 }
 
@@ -225,99 +232,4 @@ export interface SprintMetrics {
   progressPercentage: number;
   daysRemaining: number;
   dailyBurnRate: number;
-}
-
-// Planning-specific types
-export type SessionStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED';
-export type SessionState = 'waiting' | 'voting' | 'discussing' | 'revealing' | 'completed';
-export type VotingScale = 'fibonacci' | 'tshirt' | 'custom';
-
-export interface Participant {
-  id: string;
-  userId?: string;
-  name: string;
-  role?: UserRole;
-  isAnonymous: boolean;
-  socketId?: string;
-  isOnline?: boolean;
-  lastSeen?: Date;
-  joinedAt: Date;
-  leftAt?: Date;
-}
-
-export interface PlanningSession {
-  id: string;
-  roomCode: string;
-  name: string;
-  description?: string;
-  createdById: string;
-  scrumMasterId: string;
-  teamId?: string;
-  sprintId?: string;
-  releaseId?: string;
-  status: SessionStatus;
-  state: SessionState;
-  settings: {
-    votingScale: VotingScale;
-    timerDuration?: number;
-    autoReveal: boolean;
-    allowRevoting: boolean;
-  };
-  currentStoryId?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  expiresAt?: Date;
-  participants: Participant[];
-  stories: Story[];
-  votes: Record<string, Vote>;
-}
-
-export interface VoteStatistics {
-  count: number;
-  average: number;
-  median: number;
-  min: number;
-  max: number;
-  consensus: number;
-  outliers: number[];
-}
-
-export interface CreateSessionInput {
-  name: string;
-  description?: string;
-  teamId?: string;
-  sprintId?: string;
-  releaseId?: string;
-  votingScale: VotingScale;
-  timerDuration?: number;
-  autoReveal?: boolean;
-  allowRevoting?: boolean;
-}
-
-export interface JoinSessionInput {
-  userId?: string;
-  name: string;
-  role?: UserRole;
-  isAnonymous?: boolean;
-}
-
-export interface VoteInput {
-  userId: string;
-  storyId: string;
-  value: string;
-  confidence?: number;
-}
-
-// Enhanced planning types with new hierarchy
-export interface PlanningSessionWithContext extends PlanningSession {
-  team?: Team;
-  sprint?: Sprint;
-  release?: Release;
-}
-
-export interface StoryPlanningData extends Story {
-  votes: Vote[];
-  statistics?: VoteStatistics;
-  isCurrentStory: boolean;
-  estimationComplete: boolean;
 } 

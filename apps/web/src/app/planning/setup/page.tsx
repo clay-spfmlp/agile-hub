@@ -18,7 +18,6 @@ import {
   Play, 
   Copy, 
   Check, 
-  Timer,
   RefreshCw,
   UserPlus,
   Eye,

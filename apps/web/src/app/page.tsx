@@ -131,7 +131,7 @@ export default function Home() {
              <CardContent className="pt-0">
                <CardDescription className="text-base">
                  Use Fibonacci sequence, T-shirt sizes, or custom scales. 
-                 Flexible options for every team's preferred estimation method.
+                 Flexible options for every team&apos;s preferred estimation method.
                </CardDescription>
              </CardContent>
            </Card>
@@ -196,7 +196,7 @@ export default function Home() {
             Ready to Transform Your Sprint Planning?
           </h2>
           <p className="text-xl text-indigo-100 mb-8">
-            Join teams who've made estimation fun and efficient with Fun Scrum
+            Join teams who&apos;ve made estimation fun and efficient with Fun Scrum
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">

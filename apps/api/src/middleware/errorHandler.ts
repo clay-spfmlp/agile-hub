@@ -3,6 +3,7 @@ import { ZodError } from 'zod';
 
 export interface ApiError extends Error {
   statusCode?: number;
+  details?: any;
 }
 
 export const errorHandler = (
@@ -28,6 +29,7 @@ export const errorHandler = (
   if (err.statusCode) {
     return res.status(err.statusCode).json({
       error: err.message,
+      details: err.details,
     });
   }
 

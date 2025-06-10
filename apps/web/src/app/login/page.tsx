@@ -62,7 +62,7 @@ export default function LoginPage() {
           {/* Additional Info */}
           <div className="mt-8 text-center">
             <p className="text-sm text-gray-500 mb-4">
-              Don't have an account yet?
+              Don&apos;t have an account yet?
             </p>
             <Button 
               variant="outline" 

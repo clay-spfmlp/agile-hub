@@ -60,7 +60,7 @@ export default function JoinPlanningPage() {
         }
       }
 
-      const { session, participant } = await response.json();
+      const { participant } = await response.json();
       
       // Store user info in sessionStorage for the room
       sessionStorage.setItem('planning_user', JSON.stringify({
@@ -73,8 +73,9 @@ export default function JoinPlanningPage() {
 
       // Redirect to the room
       router.push(`/planning/${roomCode.toUpperCase()}`);
-    } catch (err: any) {
-      setError(err.message || 'Failed to join room');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to join room';
+      setError(errorMessage);
     } finally {
       setIsJoining(false);
     }
@@ -184,7 +185,7 @@ export default function JoinPlanningPage() {
         {/* Footer */}
         <div className="text-center mt-8 space-y-4">
           <p className="text-sm text-gray-500">
-            Don't have a room code? Contact your Scrum Master to get started.
+            Don&apos;t have a room code? Contact your Scrum Master to get started.
           </p>
           <div className="flex justify-center gap-4 text-sm">
             <Link 

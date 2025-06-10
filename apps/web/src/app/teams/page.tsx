@@ -9,12 +9,11 @@ import {
   Calendar, 
   Activity,
   Plus,
-  ArrowRight,
   Settings
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 interface Team {
   id: number;
@@ -33,26 +32,7 @@ export default function TeamsPage() {
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!loading && user) {
-      // Role-based redirect logic
-      switch (user.role) {
-        case 'SCRUM_MASTER':
-        case 'ADMIN':
-          // Stay on this page and fetch data
-          fetchTeams();
-          break;
-        case 'USER':
-        default:
-          router.push('/planning');
-          break;
-      }
-    } else if (!loading && !user) {
-      router.push('/login');
-    }
-  }, [user, loading, router]);
-
-  const fetchTeams = async () => {
+  const fetchTeams = useCallback(async () => {
     try {
       setIsLoadingData(true);
       setError(null);
@@ -78,7 +58,26 @@ export default function TeamsPage() {
     } finally {
       setIsLoadingData(false);
     }
-  };
+  }, [authenticatedFetch, user?.role, user?.id]);
+
+  useEffect(() => {
+    if (!loading && user) {
+      // Role-based redirect logic
+      switch (user.role) {
+        case 'SCRUM_MASTER':
+        case 'ADMIN':
+          // Stay on this page and fetch data
+          fetchTeams();
+          break;
+        case 'USER':
+        default:
+          router.push('/planning');
+          break;
+      }
+    } else if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
 
   if (loading) {
     return (

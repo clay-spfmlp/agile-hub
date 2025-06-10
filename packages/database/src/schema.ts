@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, integer, jsonb, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, timestamp, integer, jsonb, boolean, date } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
@@ -35,6 +35,35 @@ export const teamScrumMasters = pgTable('team_scrum_masters', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
+export const releases = pgTable('releases', {
+  id: serial('id').primaryKey(),
+  teamId: integer('team_id').references(() => teams.id).notNull(),
+  name: text('name').notNull(),
+  description: text('description'),
+  version: text('version').notNull(),
+  startDate: date('start_date'),
+  targetDate: date('target_date'),
+  actualDate: date('actual_date'),
+  status: text('status').notNull().default('PLANNING'),
+  goals: text('goals'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const sprints = pgTable('sprints', {
+  id: serial('id').primaryKey(),
+  releaseId: integer('release_id').references(() => releases.id).notNull(),
+  name: text('name').notNull(),
+  goal: text('goal'),
+  startDate: date('start_date'),
+  endDate: date('end_date'),
+  status: text('status').notNull().default('PLANNING'),
+  capacity: integer('capacity'),
+  velocity: integer('velocity'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
 export const planningSessions = pgTable('planning_sessions', {
   id: serial('id').primaryKey(),
   teamId: integer('team_id').references(() => teams.id),
@@ -48,11 +77,15 @@ export const planningSessions = pgTable('planning_sessions', {
 export const stories = pgTable('stories', {
   id: serial('id').primaryKey(),
   sessionId: integer('session_id').references(() => planningSessions.id),
+  sprintId: integer('sprint_id').references(() => sprints.id),
   title: text('title').notNull(),
   description: text('description'),
-  priority: text('priority').notNull().default('medium'),
+  acceptanceCriteria: text('acceptance_criteria'),
+  priority: text('priority').notNull().default('MEDIUM'),
   storyPoints: integer('story_points'),
-  status: text('status').notNull().default('pending'),
+  status: text('status').notNull().default('BACKLOG'),
+  assigneeId: integer('assignee_id').references(() => users.id),
+  createdById: integer('created_by_id').references(() => users.id),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });

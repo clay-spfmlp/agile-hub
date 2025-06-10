@@ -9,6 +9,9 @@ import { protectedRoutes } from './routes/protected';
 import { usersRoutes } from './routes/users';
 import { teamsRoutes } from './routes/teams';
 import { planningRoutes } from './routes/planning';
+import { releasesRoutes } from './routes/releases';
+import { sprintsRoutes } from './routes/sprints';
+import { analyticsRoutes } from './routes/analytics';
 import { errorHandler } from './middleware/errorHandler';
 import { setupPlanningSocket } from './socket/planning';
 
@@ -66,6 +69,9 @@ app.use('/api/protected', protectedRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/teams', teamsRoutes);
 app.use('/api/planning', planningRoutes(io));
+app.use('/api/releases', releasesRoutes);
+app.use('/api/sprints', sprintsRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Socket.IO setup
 setupPlanningSocket(io);
@@ -82,4 +88,8 @@ server.listen(PORT, () => {
   console.log(`🚀 API server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
   console.log(`🔌 Socket.IO server ready`);
+  console.log(`🎯 New endpoints available:`);
+  console.log(`   • /api/releases - Release management`);
+  console.log(`   • /api/sprints - Sprint management`);
+  console.log(`   • /api/analytics - Analytics and reporting`);
 }); 

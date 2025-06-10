@@ -3,10 +3,10 @@
 import React, { useState } from 'react';
 import { usePlanning } from './PlanningSessionProvider';
 import { useAuth } from '@repo/auth';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/base/card';
 import { Button } from '@repo/ui/components/base/button';
 import { Badge } from '@repo/ui/components/base/badge';
 import { Input } from '@repo/ui/components/base/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/base/card';
 import { Textarea } from '@repo/ui/components/base/textarea';
 import { 
   BookOpen, 
@@ -261,7 +261,7 @@ export function StoryDisplay({ className }: StoryDisplayProps) {
           ) : (
             <div className="space-y-2">
               {currentStory.acceptance ? (
-                currentStory.acceptance.split('\n').map((criterion, index) => (
+                currentStory.acceptance.split('\n').map((criterion: string, index: number) => (
                   <div key={index} className="flex items-start space-x-2">
                     <span className="text-green-500 mt-0.5">✓</span>
                     <span className="text-sm text-gray-600">

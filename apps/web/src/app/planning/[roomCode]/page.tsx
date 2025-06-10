@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { PlanningSessionProvider } from '@/components/planning/PlanningSessionProvider';
 import { StoryDisplay } from '@/components/planning/StoryDisplay';
 import { VotingInterface } from '@/components/planning/VotingInterface';
-import { ParticipantsList } from '@/components/planning/ParticipantsList';
 import { useAuthenticatedFetch } from '@repo/auth/hooks/useAuthenticatedFetch';
 import { useAuth } from '@repo/auth/hooks/useAuth';
 import { useSocket } from '@/hooks/useSocket';

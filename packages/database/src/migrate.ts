@@ -23,6 +23,8 @@ async function main() {
     DROP TABLE IF EXISTS votes CASCADE;
     DROP TABLE IF EXISTS stories CASCADE;
     DROP TABLE IF EXISTS planning_sessions CASCADE;
+    DROP TABLE IF EXISTS sprints CASCADE;
+    DROP TABLE IF EXISTS releases CASCADE;
     DROP TABLE IF EXISTS team_members CASCADE;
     DROP TABLE IF EXISTS team_scrum_masters CASCADE;
     DROP TABLE IF EXISTS teams CASCADE;
@@ -69,6 +71,35 @@ async function main() {
       UNIQUE(team_id, user_id)
     );
 
+    CREATE TABLE IF NOT EXISTS releases (
+      id SERIAL PRIMARY KEY,
+      team_id INTEGER REFERENCES teams(id) NOT NULL,
+      name TEXT NOT NULL,
+      description TEXT,
+      version TEXT NOT NULL,
+      start_date DATE,
+      target_date DATE,
+      actual_date DATE,
+      status TEXT NOT NULL DEFAULT 'PLANNING',
+      goals TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS sprints (
+      id SERIAL PRIMARY KEY,
+      release_id INTEGER REFERENCES releases(id) NOT NULL,
+      name TEXT NOT NULL,
+      goal TEXT,
+      start_date DATE,
+      end_date DATE,
+      status TEXT NOT NULL DEFAULT 'PLANNING',
+      capacity INTEGER,
+      velocity INTEGER,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE TABLE IF NOT EXISTS planning_sessions (
       id SERIAL PRIMARY KEY,
       team_id INTEGER REFERENCES teams(id),
@@ -82,11 +113,15 @@ async function main() {
     CREATE TABLE IF NOT EXISTS stories (
       id SERIAL PRIMARY KEY,
       session_id INTEGER REFERENCES planning_sessions(id),
+      sprint_id INTEGER REFERENCES sprints(id),
       title TEXT NOT NULL,
       description TEXT,
-      priority TEXT NOT NULL DEFAULT 'medium',
+      acceptance_criteria TEXT,
+      priority TEXT NOT NULL DEFAULT 'MEDIUM',
       story_points INTEGER,
-      status TEXT NOT NULL DEFAULT 'pending',
+      status TEXT NOT NULL DEFAULT 'BACKLOG',
+      assignee_id INTEGER REFERENCES users(id),
+      created_by_id INTEGER REFERENCES users(id),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
@@ -111,6 +146,15 @@ async function main() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+
+    -- Create indexes for better performance
+    CREATE INDEX IF NOT EXISTS idx_releases_team_id ON releases(team_id);
+    CREATE INDEX IF NOT EXISTS idx_releases_status ON releases(status);
+    CREATE INDEX IF NOT EXISTS idx_sprints_release_id ON sprints(release_id);
+    CREATE INDEX IF NOT EXISTS idx_sprints_status ON sprints(status);
+    CREATE INDEX IF NOT EXISTS idx_stories_sprint_id ON stories(sprint_id);
+    CREATE INDEX IF NOT EXISTS idx_stories_status ON stories(status);
+    CREATE INDEX IF NOT EXISTS idx_stories_assignee_id ON stories(assignee_id);
   `);
 
   console.log('Migrations completed successfully!');

@@ -1,469 +1,483 @@
 import { db } from './client';
-import { users, teams, teamMembers, teamScrumMasters, planningSessions, stories, votes } from './schema';
-import bcrypt from 'bcryptjs';
+import { users, teams, teamMembers, teamScrumMasters, releases, sprints, stories, planningSessions, votes, settings } from './schema';
+import { eq } from 'drizzle-orm';
 
-async function seed() {
+async function main() {
+  console.log('Seeding database...');
+
   try {
-    console.log('Starting database seed...');
-    
-    // Clear existing data to avoid conflicts
-    console.log('Clearing existing data...');
-    await db.delete(votes);
-    await db.delete(stories);
-    await db.delete(planningSessions);
-    await db.delete(teamMembers);
-    await db.delete(teamScrumMasters);
-    await db.delete(teams);
-    await db.delete(users);
-    
-    console.log('Creating new seed data...');
-    
-    // Hash passwords for all users
-    const defaultPassword = await bcrypt.hash('password123', 12);
-    const adminPassword = await bcrypt.hash('K6b18y63*123', 12);
+    // Clear existing data first (in correct order to handle foreign keys)
+    // console.log('Clearing existing data...');
+    // await db.delete(votes);
+    // await db.delete(stories);
+    // await db.delete(planningSessions);
+    // await db.delete(sprints);
+    // await db.delete(releases);
+    // await db.delete(teamScrumMasters);
+    // await db.delete(teamMembers);
+    // await db.delete(teams);
+    // await db.delete(users);
+    // await db.delete(settings);
+    // console.log('✓ Existing data cleared');
 
-    // Create test users
-    const [admin, scrumMaster1, scrumMaster2, scrumMaster3, user1, user2] = await Promise.all([
-      db.insert(users).values({
-        email: 'claycpi@gmail.com',
-        name: 'Clay Admin',
-        password: adminPassword,
-        role: 'ADMIN',
-      }).returning(),
-      db.insert(users).values({
-        email: 'scrum1@example.com',
-        name: 'Sarah Scrum',
-        password: defaultPassword,
-        role: 'SCRUM_MASTER',
-      }).returning(),
-      db.insert(users).values({
-        email: 'scrum2@example.com',
-        name: 'Mike Master',
-        password: defaultPassword,
-        role: 'SCRUM_MASTER',
-      }).returning(),
-      db.insert(users).values({
-        email: 'scrum3@example.com',
-        name: 'Lisa Lead',
-        password: defaultPassword,
-        role: 'SCRUM_MASTER',
-      }).returning(),
-      db.insert(users).values({
-        email: 'user1@example.com',
-        name: 'John Doe',
-        password: defaultPassword,
-        role: 'USER',
-      }).returning(),
-      db.insert(users).values({
-        email: 'user2@example.com',
-        name: 'Jane Smith',
-        password: defaultPassword,
-        role: 'USER',
-      }).returning(),
-    ]);
+    // Seed users with correct password hash for 'password123'
+    const correctPasswordHash = '$2a$10$qCf/63n0zyN1Mv5JPQxdUevDC0mzsgzalphgKHiAJDBT/OawDe3nu';
+    
+    const [adminUser] = await db.insert(users).values([
+      {
+        email: 'admin@agilehub.com',
+        name: 'Admin User',
+        password: correctPasswordHash, // password123
+        role: 'ADMIN'
+      }
+    ]).returning();
 
-    // Add additional test users for pagination testing
-    const [admin2, superAdmin, scrumMaster4, scrumMaster5, user3, user4, user5, user6, user7, user8, user9, user10] = await Promise.all([
-      db.insert(users).values({
-        email: 'admin2@example.com',
-        name: 'Alex Administrator',
-        password: defaultPassword,
-        role: 'ADMIN',
-      }).returning(),
-      db.insert(users).values({
-        email: 'superadmin@example.com',
-        name: 'Sam SuperAdmin',
-        password: defaultPassword,
-        role: 'SUPER_ADMIN',
-      }).returning(),
-      db.insert(users).values({
-        email: 'scrum4@example.com',
-        name: 'Rachel Rodriguez',
-        password: defaultPassword,
-        role: 'SCRUM_MASTER',
-      }).returning(),
-      db.insert(users).values({
-        email: 'scrum5@example.com',
-        name: 'David Director',
-        password: defaultPassword,
-        role: 'SCRUM_MASTER',
-      }).returning(),
-      db.insert(users).values({
-        email: 'user3@example.com',
-        name: 'Emily Evans',
-        password: defaultPassword,
-        role: 'USER',
-      }).returning(),
-      db.insert(users).values({
-        email: 'user4@example.com',
-        name: 'Robert Rodriguez',
-        password: defaultPassword,
-        role: 'USER',
-      }).returning(),
-      db.insert(users).values({
-        email: 'user5@example.com',
-        name: 'Maria Martinez',
-        password: defaultPassword,
-        role: 'USER',
-      }).returning(),
-      db.insert(users).values({
-        email: 'user6@example.com',
-        name: 'James Johnson',
-        password: defaultPassword,
-        role: 'USER',
-      }).returning(),
-      db.insert(users).values({
-        email: 'user7@example.com',
-        name: 'Lisa Lopez',
-        password: defaultPassword,
-        role: 'USER',
-      }).returning(),
-      db.insert(users).values({
-        email: 'user8@example.com',
-        name: 'Michael Miller',
-        password: defaultPassword,
-        role: 'USER',
-      }).returning(),
-      db.insert(users).values({
-        email: 'user9@example.com',
-        name: 'Jennifer Jackson',
-        password: defaultPassword,
-        role: 'USER',
-      }).returning(),
-      db.insert(users).values({
-        email: 'user10@example.com',
-        name: 'Christopher Chen',
-        password: defaultPassword,
-        role: 'USER',
-      }).returning(),
-    ]);
+    const [scrumMaster] = await db.insert(users).values([
+      {
+        email: 'scrum@agilehub.com',
+        name: 'John Smith',
+        password: correctPasswordHash, // password123
+        role: 'SCRUM_MASTER'
+      }
+    ]).returning();
 
-    // Create test teams with more variety
-    const [team1, team2, team3, team4, team5, team6, team7, team8, team9, team10, team11, team12, team13, team14, team15, team16] = await Promise.all([
-      db.insert(teams).values({
+    const developers = await db.insert(users).values([
+      {
+        email: 'dev1@agilehub.com',
+        name: 'Alice Johnson',
+        password: correctPasswordHash, // password123
+        role: 'DEVELOPER'
+      },
+      {
+        email: 'dev2@agilehub.com',
+        name: 'Bob Wilson',
+        password: correctPasswordHash, // password123
+        role: 'DEVELOPER'
+      },
+      {
+        email: 'dev3@agilehub.com',
+        name: 'Carol Davis',
+        password: correctPasswordHash, // password123
+        role: 'DEVELOPER'
+      }
+    ]).returning();
+
+    const [tester] = await db.insert(users).values([
+      {
+        email: 'tester@agilehub.com',
+        name: 'David Brown',
+        password: correctPasswordHash, // password123
+        role: 'TESTER'
+      }
+    ]).returning();
+
+    console.log('✓ Users seeded');
+
+    // Seed teams
+    const [team1] = await db.insert(teams).values([
+      {
         name: 'Frontend Team',
-        description: 'Frontend development team focusing on React and TypeScript',
-        scrumMasterId: scrumMaster1[0].id, // Sarah Smith
-      }).returning(),
-      db.insert(teams).values({
+        description: 'Responsible for user interface and user experience',
+        scrumMasterId: scrumMaster.id
+      }
+    ]).returning();
+
+    const [team2] = await db.insert(teams).values([
+      {
         name: 'Backend Team',
-        description: 'Backend development team working on APIs and databases',
-        scrumMasterId: scrumMaster2[0].id, // Mike Johnson
-      }).returning(),
-      db.insert(teams).values({
-        name: 'DevOps Team',
-        description: 'Infrastructure and deployment automation team',
-        scrumMasterId: scrumMaster3[0].id, // Emily Davis
-      }).returning(),
-      db.insert(teams).values({
-        name: 'QA Team',
-        description: 'Quality assurance and testing team',
-        scrumMasterId: scrumMaster1[0].id, // Reusing Sarah as there are only 3 
-      }).returning(),
-      db.insert(teams).values({
-        name: 'Mobile Team',
-        description: 'iOS and Android mobile app development',
-        scrumMasterId: scrumMaster2[0].id, // Reusing Mike
-      }).returning(),
-      db.insert(teams).values({
-        name: 'Data Team',
-        description: 'Data analytics and machine learning team',
-        scrumMasterId: null, // No assigned Scrum Master
-      }).returning(),
-      // New teams for pagination testing
-      db.insert(teams).values({
-        name: 'Security Team',
-        description: 'Cybersecurity and penetration testing specialists',
-        scrumMasterId: scrumMaster3[0].id,
-      }).returning(),
-      db.insert(teams).values({
-        name: 'Platform Team',
-        description: 'Core platform infrastructure and shared services',
-        scrumMasterId: scrumMaster1[0].id,
-      }).returning(),
-      db.insert(teams).values({
-        name: 'Product Team',
-        description: 'Product management and user experience design',
-        scrumMasterId: scrumMaster2[0].id,
-      }).returning(),
-      db.insert(teams).values({
-        name: 'Research Team',
-        description: 'Innovation and research & development initiatives',
-        scrumMasterId: null,
-      }).returning(),
-      db.insert(teams).values({
-        name: 'Analytics Team',
-        description: 'Business intelligence and data visualization',
-        scrumMasterId: scrumMaster3[0].id,
-      }).returning(),
-      db.insert(teams).values({
-        name: 'Growth Team',
-        description: 'User acquisition and conversion optimization',
-        scrumMasterId: scrumMaster1[0].id,
-      }).returning(),
-      db.insert(teams).values({
-        name: 'Support Team',
-        description: 'Customer support and technical assistance',
-        scrumMasterId: null,
-      }).returning(),
-      db.insert(teams).values({
-        name: 'Architecture Team',
-        description: 'System architecture and technical strategy',
-        scrumMasterId: scrumMaster2[0].id,
-      }).returning(),
-      db.insert(teams).values({
-        name: 'Integration Team',
-        description: 'Third-party integrations and API partnerships',
-        scrumMasterId: scrumMaster3[0].id,
-      }).returning(),
-      db.insert(teams).values({
-        name: 'Performance Team',
-        description: 'Application performance optimization and monitoring',
-        scrumMasterId: null,
-      }).returning(),
+        description: 'Responsible for API and backend services',
+        scrumMasterId: scrumMaster.id
+      }
+    ]).returning();
+
+    console.log('✓ Teams seeded');
+
+    // Seed team members
+    await db.insert(teamMembers).values([
+      { teamId: team1.id, userId: developers[0].id, role: 'DEVELOPER' },
+      { teamId: team1.id, userId: developers[1].id, role: 'DEVELOPER' },
+      { teamId: team1.id, userId: tester.id, role: 'TESTER' },
+      { teamId: team2.id, userId: developers[2].id, role: 'DEVELOPER' },
+      { teamId: team2.id, userId: tester.id, role: 'TESTER' }
     ]);
 
-    // Add team members to different teams
-    await Promise.all([
-      // Frontend Team members
-      db.insert(teamMembers).values({
-        teamId: team1[0].id,
-        userId: user1[0].id,
-        role: 'MEMBER',
-      }),
-      db.insert(teamMembers).values({
-        teamId: team1[0].id,
-        userId: user2[0].id,
-        role: 'MEMBER',
-      }),
-      // Backend Team members
-      db.insert(teamMembers).values({
-        teamId: team2[0].id,
-        userId: user1[0].id,
-        role: 'MEMBER',
-      }),
-      db.insert(teamMembers).values({
-        teamId: team2[0].id,
-        userId: user2[0].id,
-        role: 'MEMBER',
-      }),
-      // DevOps Team members
-      db.insert(teamMembers).values({
-        teamId: team3[0].id,
-        userId: user1[0].id,
-        role: 'MEMBER',
-      }),
-      // QA Team members
-      db.insert(teamMembers).values({
-        teamId: team4[0].id,
-        userId: user2[0].id,
-        role: 'MEMBER',
-      }),
-      // Mobile Team members
-      db.insert(teamMembers).values({
-        teamId: team5[0].id,
-        userId: user1[0].id,
-        role: 'MEMBER',
-      }),
-      db.insert(teamMembers).values({
-        teamId: team5[0].id,
-        userId: user2[0].id,
-        role: 'MEMBER',
-      }),
-      // Data Team members (no scrum master)
-      db.insert(teamMembers).values({
-        teamId: team6[0].id,
-        userId: user1[0].id,
-        role: 'MEMBER',
-      }),
-      // New teams members - distributing users across teams
-      // Security Team
-      db.insert(teamMembers).values({
-        teamId: team7[0].id,
-        userId: user3[0].id,
-        role: 'MEMBER',
-      }),
-      db.insert(teamMembers).values({
-        teamId: team7[0].id,
-        userId: user4[0].id,
-        role: 'MEMBER',
-      }),
-      // Platform Team
-      db.insert(teamMembers).values({
-        teamId: team8[0].id,
-        userId: user5[0].id,
-        role: 'MEMBER',
-      }),
-      db.insert(teamMembers).values({
-        teamId: team8[0].id,
-        userId: user6[0].id,
-        role: 'MEMBER',
-      }),
-      db.insert(teamMembers).values({
-        teamId: team8[0].id,
-        userId: user7[0].id,
-        role: 'MEMBER',
-      }),
-      // Product Team
-      db.insert(teamMembers).values({
-        teamId: team9[0].id,
-        userId: user8[0].id,
-        role: 'MEMBER',
-      }),
-      // Research Team (smaller team)
-      db.insert(teamMembers).values({
-        teamId: team10[0].id,
-        userId: user9[0].id,
-        role: 'MEMBER',
-      }),
-      // Analytics Team
-      db.insert(teamMembers).values({
-        teamId: team11[0].id,
-        userId: user10[0].id,
-        role: 'MEMBER',
-      }),
-      db.insert(teamMembers).values({
-        teamId: team11[0].id,
-        userId: user3[0].id,
-        role: 'MEMBER',
-      }),
-      // Growth Team
-      db.insert(teamMembers).values({
-        teamId: team12[0].id,
-        userId: user4[0].id,
-        role: 'MEMBER',
-      }),
-      db.insert(teamMembers).values({
-        teamId: team12[0].id,
-        userId: user5[0].id,
-        role: 'MEMBER',
-      }),
-      // Support Team (larger team)
-      db.insert(teamMembers).values({
-        teamId: team13[0].id,
-        userId: user6[0].id,
-        role: 'MEMBER',
-      }),
-      db.insert(teamMembers).values({
-        teamId: team13[0].id,
-        userId: user7[0].id,
-        role: 'MEMBER',
-      }),
-      db.insert(teamMembers).values({
-        teamId: team13[0].id,
-        userId: user8[0].id,
-        role: 'MEMBER',
-      }),
-      db.insert(teamMembers).values({
-        teamId: team13[0].id,
-        userId: user9[0].id,
-        role: 'MEMBER',
-      }),
-      // Architecture Team
-      db.insert(teamMembers).values({
-        teamId: team14[0].id,
-        userId: user10[0].id,
-        role: 'MEMBER',
-      }),
-      // Integration Team
-      db.insert(teamMembers).values({
-        teamId: team15[0].id,
-        userId: user1[0].id,
-        role: 'MEMBER',
-      }),
-      db.insert(teamMembers).values({
-        teamId: team15[0].id,
-        userId: user2[0].id,
-        role: 'MEMBER',
-      }),
-      // Performance Team (no scrum master, smaller team)
-      db.insert(teamMembers).values({
-        teamId: team16[0].id,
-        userId: user3[0].id,
-        role: 'MEMBER',
-      }),
+    // Seed team scrum masters
+    await db.insert(teamScrumMasters).values([
+      { teamId: team1.id, userId: scrumMaster.id, isLead: true },
+      { teamId: team2.id, userId: scrumMaster.id, isLead: true }
     ]);
 
-    // Create planning sessions
-    const [session1, session2] = await Promise.all([
-      db.insert(planningSessions).values({
-        teamId: team1[0].id,
-        name: 'Sprint 1 Planning',
+    console.log('✓ Team memberships seeded');
+
+    // Seed releases
+    const [release1] = await db.insert(releases).values([
+      {
+        teamId: team1.id,
+        name: 'User Authentication System',
+        description: 'Complete user authentication and authorization system',
+        version: 'v1.0.0',
+        startDate: '2024-01-01',
+        targetDate: '2024-03-31',
+        status: 'ACTIVE',
+        goals: 'Implement secure user authentication, role-based access control, and user management features'
+      }
+    ]).returning();
+
+    const [release2] = await db.insert(releases).values([
+      {
+        teamId: team1.id,
+        name: 'Dashboard and Analytics',
+        description: 'Advanced dashboard with real-time analytics',
+        version: 'v1.1.0',
+        startDate: '2024-04-01',
+        targetDate: '2024-06-30',
+        status: 'PLANNING',
+        goals: 'Create comprehensive dashboard with charts, metrics, and real-time data visualization'
+      }
+    ]).returning();
+
+    const [release3] = await db.insert(releases).values([
+      {
+        teamId: team2.id,
+        name: 'API Performance Optimization',
+        description: 'Optimize API performance and scalability',
+        version: 'v2.0.0',
+        startDate: '2024-02-01',
+        targetDate: '2024-04-30',
+        status: 'ACTIVE',
+        goals: 'Improve API response times, implement caching, and optimize database queries'
+      }
+    ]).returning();
+
+    console.log('✓ Releases seeded');
+
+    // Seed sprints
+    const [sprint1] = await db.insert(sprints).values([
+      {
+        releaseId: release1.id,
+        name: 'Sprint 1: Core Authentication',
+        goal: 'Implement basic user login and registration',
+        startDate: '2024-01-01',
+        endDate: '2024-01-14',
+        status: 'COMPLETED',
+        capacity: 40,
+        velocity: 38
+      }
+    ]).returning();
+
+    const [sprint2] = await db.insert(sprints).values([
+      {
+        releaseId: release1.id,
+        name: 'Sprint 2: Role Management',
+        goal: 'Implement role-based access control',
+        startDate: '2024-01-15',
+        endDate: '2024-01-28',
+        status: 'COMPLETED',
+        capacity: 35,
+        velocity: 35
+      }
+    ]).returning();
+
+    const [sprint3] = await db.insert(sprints).values([
+      {
+        releaseId: release1.id,
+        name: 'Sprint 3: User Profile & Settings',
+        goal: 'Complete user profile management and settings',
+        startDate: '2024-01-29',
+        endDate: '2024-02-11',
+        status: 'ACTIVE',
+        capacity: 42
+      }
+    ]).returning();
+
+    const [sprint4] = await db.insert(sprints).values([
+      {
+        releaseId: release2.id,
+        name: 'Sprint 1: Dashboard Foundation',
+        goal: 'Create basic dashboard structure',
+        startDate: '2024-04-01',
+        endDate: '2024-04-14',
+        status: 'PLANNING',
+        capacity: 45
+      }
+    ]).returning();
+
+    const [sprint5] = await db.insert(sprints).values([
+      {
+        releaseId: release3.id,
+        name: 'Sprint 1: Performance Analysis',
+        goal: 'Analyze current API performance bottlenecks',
+        startDate: '2024-02-01',
+        endDate: '2024-02-14',
+        status: 'COMPLETED',
+        capacity: 30,
+        velocity: 28
+      }
+    ]).returning();
+
+    const [sprint6] = await db.insert(sprints).values([
+      {
+        releaseId: release3.id,
+        name: 'Sprint 2: Database Optimization',
+        goal: 'Optimize database queries and implement caching',
+        startDate: '2024-02-15',
+        endDate: '2024-02-28',
+        status: 'ACTIVE',
+        capacity: 35
+      }
+    ]).returning();
+
+    console.log('✓ Sprints seeded');
+
+    // Seed planning sessions
+    const [session1] = await db.insert(planningSessions).values([
+      {
+        teamId: team1.id,
+        name: 'Sprint 3 Planning Session',
         status: 'active',
         settings: {
-          votingSystem: 'fibonacci',
-          autoReveal: true,
-          timeLimit: 60,
-        },
-      }).returning(),
-      db.insert(planningSessions).values({
-        teamId: team2[0].id,
-        name: 'Sprint 2 Planning',
-        status: 'completed',
-        settings: {
-          votingSystem: 't-shirt',
+          votingScale: 'fibonacci',
+          timerDuration: 300,
           autoReveal: false,
-          timeLimit: 90,
-        },
-      }).returning(),
-    ]);
+          allowRevoting: true
+        }
+      }
+    ]).returning();
 
-    // Create stories
-    const [story1, story2, story3] = await Promise.all([
-      db.insert(stories).values({
-        sessionId: session1[0].id,
-        title: 'Implement User Authentication',
-        description: 'Add login and registration functionality',
-        priority: 'high',
-        storyPoints: 5,
-        status: 'pending',
-      }).returning(),
-      db.insert(stories).values({
-        sessionId: session1[0].id,
-        title: 'Design Dashboard UI',
-        description: 'Create responsive dashboard layout',
-        priority: 'medium',
-        storyPoints: 3,
-        status: 'in_progress',
-      }).returning(),
-      db.insert(stories).values({
-        sessionId: session2[0].id,
-        title: 'API Integration',
-        description: 'Integrate with external API',
-        priority: 'high',
+    console.log('✓ Planning sessions seeded');
+
+    // Seed stories
+    const storiesData = [
+      // Sprint 1 - Completed stories
+      {
+        sprintId: sprint1.id,
+        sessionId: null,
+        title: 'User Registration Form',
+        description: 'Create a user registration form with email and password validation',
+        acceptanceCriteria: 'User can register with valid email and strong password. Form shows appropriate validation errors.',
+        priority: 'HIGH' as const,
         storyPoints: 8,
-        status: 'completed',
-      }).returning(),
+        status: 'DONE' as const,
+        assigneeId: developers[0].id,
+        createdById: scrumMaster.id
+      },
+      {
+        sprintId: sprint1.id,
+        sessionId: null,
+        title: 'User Login System',
+        description: 'Implement secure user login with session management',
+        acceptanceCriteria: 'Users can log in with valid credentials and stay logged in across browser sessions.',
+        priority: 'HIGH' as const,
+        storyPoints: 13,
+        status: 'DONE' as const,
+        assigneeId: developers[1].id,
+        createdById: scrumMaster.id
+      },
+      {
+        sprintId: sprint1.id,
+        sessionId: null,
+        title: 'Password Reset Flow',
+        description: 'Allow users to reset their password via email',
+        acceptanceCriteria: 'Users receive reset email and can set new password securely.',
+        priority: 'MEDIUM' as const,
+        storyPoints: 5,
+        status: 'DONE' as const,
+        assigneeId: developers[0].id,
+        createdById: scrumMaster.id
+      },
+
+      // Sprint 2 - Completed stories
+      {
+        sprintId: sprint2.id,
+        sessionId: null,
+        title: 'Role-Based Access Control',
+        description: 'Implement different user roles with appropriate permissions',
+        acceptanceCriteria: 'Admin, Scrum Master, and Developer roles have correct access levels.',
+        priority: 'HIGH' as const,
+        storyPoints: 21,
+        status: 'DONE' as const,
+        assigneeId: developers[1].id,
+        createdById: scrumMaster.id
+      },
+      {
+        sprintId: sprint2.id,
+        sessionId: null,
+        title: 'Admin User Management',
+        description: 'Allow admins to create, edit, and deactivate users',
+        acceptanceCriteria: 'Admins can manage all user accounts with proper validation and security.',
+        priority: 'HIGH' as const,
+        storyPoints: 13,
+        status: 'DONE' as const,
+        assigneeId: developers[0].id,
+        createdById: scrumMaster.id
+      },
+
+      // Sprint 3 - Active sprint stories
+      {
+        sprintId: sprint3.id,
+        sessionId: session1.id,
+        title: 'User Profile Management',
+        description: 'Allow users to view and edit their profile information',
+        acceptanceCriteria: 'Users can update name, email, and profile picture securely.',
+        priority: 'MEDIUM' as const,
+        storyPoints: null, // Needs estimation
+        status: 'READY' as const,
+        assigneeId: null,
+        createdById: scrumMaster.id
+      },
+      {
+        sprintId: sprint3.id,
+        sessionId: session1.id,
+        title: 'Account Settings Page',
+        description: 'Create settings page for account preferences',
+        acceptanceCriteria: 'Users can change password, notification preferences, and account settings.',
+        priority: 'MEDIUM' as const,
+        storyPoints: null, // Needs estimation
+        status: 'BACKLOG' as const,
+        assigneeId: null,
+        createdById: scrumMaster.id
+      },
+      {
+        sprintId: sprint3.id,
+        sessionId: session1.id,
+        title: 'Two-Factor Authentication',
+        description: 'Add optional 2FA for enhanced security',
+        acceptanceCriteria: 'Users can enable/disable 2FA using authenticator apps or SMS.',
+        priority: 'LOW' as const,
+        storyPoints: null, // Needs estimation
+        status: 'BACKLOG' as const,
+        assigneeId: null,
+        createdById: scrumMaster.id
+      },
+
+      // Sprint 6 - Backend team active sprint
+      {
+        sprintId: sprint6.id,
+        sessionId: null,
+        title: 'Database Query Optimization',
+        description: 'Optimize slow database queries identified in performance analysis',
+        acceptanceCriteria: 'All queries complete in under 100ms with proper indexing.',
+        priority: 'HIGH' as const,
+        storyPoints: 13,
+        status: 'IN_PROGRESS' as const,
+        assigneeId: developers[2].id,
+        createdById: scrumMaster.id
+      },
+      {
+        sprintId: sprint6.id,
+        sessionId: null,
+        title: 'Redis Caching Implementation',
+        description: 'Implement Redis caching for frequently accessed data',
+        acceptanceCriteria: 'API responses are cached appropriately with proper TTL and cache invalidation.',
+        priority: 'HIGH' as const,
+        storyPoints: 8,
+        status: 'READY' as const,
+        assigneeId: developers[2].id,
+        createdById: scrumMaster.id
+      },
+
+      // Future sprint stories (no sprint assigned)
+      {
+        sprintId: null,
+        sessionId: null,
+        title: 'Real-time Dashboard Updates',
+        description: 'Implement WebSocket connections for real-time dashboard updates',
+        acceptanceCriteria: 'Dashboard updates in real-time without page refresh.',
+        priority: 'MEDIUM' as const,
+        storyPoints: null,
+        status: 'BACKLOG' as const,
+        assigneeId: null,
+        createdById: scrumMaster.id
+      },
+      {
+        sprintId: null,
+        sessionId: null,
+        title: 'Advanced Analytics Charts',
+        description: 'Create interactive charts for project analytics',
+        acceptanceCriteria: 'Charts display velocity, burndown, and progress metrics with filtering.',
+        priority: 'MEDIUM' as const,
+        storyPoints: null,
+        status: 'BACKLOG' as const,
+        assigneeId: null,
+        createdById: scrumMaster.id
+      }
+    ];
+
+    await db.insert(stories).values(storiesData);
+
+    console.log('✓ Stories seeded');
+
+    // Seed some sample votes for planning session stories
+    const planningStories = await db.select().from(stories).where(eq(stories.sessionId, session1.id));
+    
+    if (planningStories.length > 0) {
+      const votesData = [
+        // Votes for User Profile Management story
+        {
+          storyId: planningStories[0].id,
+          userId: developers[0].id,
+          value: '8',
+          confidence: 4
+        },
+        {
+          storyId: planningStories[0].id,
+          userId: developers[1].id,
+          value: '5',
+          confidence: 5
+        },
+        {
+          storyId: planningStories[0].id,
+          userId: tester.id,
+          value: '8',
+          confidence: 3
+        }
+      ];
+
+      await db.insert(votes).values(votesData);
+      console.log('✓ Sample votes seeded');
+    }
+
+    // Seed settings
+    await db.insert(settings).values([
+      {
+        defaultStoryPoints: [1, 2, 3, 5, 8, 13, 21, 34],
+        defaultTShirtSizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+        allowCustomVotes: true,
+        requireVoteConfirmation: false,
+        autoRevealVotes: false,
+        votingTimeLimit: 300
+      }
     ]);
 
-    // Add some votes
-    await Promise.all([
-      db.insert(votes).values({
-        storyId: story1[0].id,
-        userId: user1[0].id,
-        value: '5',
-        confidence: 8,
-      }),
-      db.insert(votes).values({
-        storyId: story1[0].id,
-        userId: user2[0].id,
-        value: '3',
-        confidence: 6,
-      }),
-      db.insert(votes).values({
-        storyId: story2[0].id,
-        userId: user1[0].id,
-        value: '2',
-        confidence: 9,
-      }),
-    ]);
+    console.log('✓ Settings seeded');
 
-    console.log('Database seeded successfully!');
+    console.log('\n🎉 Database seeding completed successfully!');
+    console.log('\n📊 Summary:');
+    console.log(`   👥 Users: ${1 + 1 + 3 + 1} (Admin, Scrum Master, Developers, Tester)`);
+    console.log(`   🏢 Teams: 2 (Frontend, Backend)`);
+    console.log(`   🚀 Releases: 3 (Auth System, Dashboard, API Optimization)`);
+    console.log(`   ⚡ Sprints: 6 (2 completed, 2 active, 2 planning)`);
+    console.log(`   📝 Stories: ${storiesData.length} (across different sprints and backlog)`);
+    console.log(`   🗳️  Planning Sessions: 1 active session`);
+    console.log('\n🔐 Login credentials:');
+    console.log('   Admin: admin@agilehub.com / password123');
+    console.log('   Scrum Master: scrum@agilehub.com / password123');
+    console.log('   Developer: dev1@agilehub.com / password123');
+
   } catch (error) {
     console.error('Error seeding database:', error);
     throw error;
   }
 }
 
-// Run the seed function
-seed().catch(console.error); 
+if (require.main === module) {
+  main()
+    .then(() => {
+      console.log('Seeding completed');
+      process.exit(0);
+    })
+    .catch((error) => {
+      console.error('Seeding failed:', error);
+      process.exit(1);
+    });
+} 

@@ -10,13 +10,12 @@ import {
   UserCheck,
   Activity,
   TrendingUp,
-  Plus,
   ArrowRight,
   Layers
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 interface Team {
   id: number;
@@ -35,28 +34,7 @@ export default function DashboardPage() {
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!loading && user) {
-      // Role-based redirect logic
-      switch (user.role) {
-        case 'SCRUM_MASTER':
-          // Stay on this page and fetch data
-          fetchDashboardData();
-          break;
-        case 'ADMIN':
-          router.push('/admin/dashboard');
-          break;
-        case 'USER':
-        default:
-          router.push('/planning');
-          break;
-      }
-    } else if (!loading && !user) {
-      router.push('/login');
-    }
-  }, [user, loading, router]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setIsLoadingData(true);
       setError(null);
@@ -82,7 +60,28 @@ export default function DashboardPage() {
     } finally {
       setIsLoadingData(false);
     }
-  };
+  }, [authenticatedFetch, user?.id]);
+
+  useEffect(() => {
+    if (!loading && user) {
+      // Role-based redirect logic
+      switch (user.role) {
+        case 'SCRUM_MASTER':
+          // Stay on this page and fetch data
+          fetchDashboardData();
+          break;
+        case 'ADMIN':
+          router.push('/admin/dashboard');
+          break;
+        case 'USER':
+        default:
+          router.push('/planning');
+          break;
+      }
+    } else if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
 
   if (loading) {
     return (
@@ -215,7 +214,7 @@ export default function DashboardPage() {
               <Layers className="h-16 w-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No Teams Yet</h3>
               <p className="text-gray-600 mb-6">
-                You haven't been assigned as Scrum Master to any teams yet.
+                You haven&apos;t been assigned as Scrum Master to any teams yet.
               </p>
               <Button variant="outline">
                 <Link href="/planning">

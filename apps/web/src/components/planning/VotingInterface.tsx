@@ -33,10 +33,10 @@ export function VotingInterface({ className }: VotingInterfaceProps) {
     ? FIBONACCI_SCALE 
     : TSHIRT_SCALE;
 
-  const isVotingPhase = state.session.state === 'voting';
   const isRevealPhase = state.session.state === 'revealing';
   const isWaiting = state.session.state === 'waiting' || !state.session.state;
 
+  const isVotingPhase = state.session.state === 'voting';
   const handleVote = (value: string) => {
     if (!isVotingPhase || state.hasVoted) return;
     
@@ -44,9 +44,6 @@ export function VotingInterface({ className }: VotingInterfaceProps) {
     actions.castVote(value);
   };
 
-  const handleRevealVotes = () => {
-    actions.revealVotes();
-  };
 
   // Waiting state - voting hasn't started yet
   if (isWaiting) {

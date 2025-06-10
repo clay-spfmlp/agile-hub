@@ -10,7 +10,10 @@ import {
   Users, 
   Play,
   Settings,
-  BarChart3
+  BarChart3,
+  Package,
+  Calendar,
+  TrendingUp
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -19,7 +22,7 @@ export function ScrumMasterNav() {
   const { user, logout } = useAuth();
   const pathname = usePathname();
 
-  if (!user || user.role !== 'SCRUM_MASTER') {
+  if (!user || (user.role !== 'SCRUM_MASTER' && user.role !== 'ADMIN')) {
     return null;
   }
 
@@ -43,6 +46,24 @@ export function ScrumMasterNav() {
       label: 'Teams',
       icon: Users,
       active: pathname.startsWith('/teams')
+    },
+    {
+      href: '/releases',
+      label: 'Releases',
+      icon: Package,
+      active: pathname.startsWith('/releases')
+    },
+    {
+      href: '/sprints',
+      label: 'Sprints',
+      icon: Calendar,
+      active: pathname.startsWith('/sprints')
+    },
+    {
+      href: '/analytics',
+      label: 'Analytics',
+      icon: TrendingUp,
+      active: pathname.startsWith('/analytics')
     },
     {
       href: '/planning/setup',

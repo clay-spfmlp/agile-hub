@@ -13,7 +13,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { user, loading } = useAuth();
   const pathname = usePathname();
 
-  // Don't render navigation while loading auth state
+  // Don&apos;t render navigation while loading auth state
   if (loading) {
     return <>{children}</>;
   }
