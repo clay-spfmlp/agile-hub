@@ -90,7 +90,7 @@ const VOTING_SCALES = {
 export default function PlanningSetupPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const authenticatedFetch = useAuthenticatedFetch();
   
   const teamId = searchParams.get('team');
@@ -105,17 +105,17 @@ export default function PlanningSetupPage() {
     name: '',
     description: '',
     votingScale: 'fibonacci',
-    timerDuration: 300, // 5 minutes default
-    autoReveal: false,
+    timerDuration: 0, // No timer by default
+    autoReveal: true, // Auto reveal enabled by default
     allowRevoting: true
   });
 
-  // Fetch team details
+  // Fetch team details - only after auth is loaded and user is available
   useEffect(() => {
-    if (teamId) {
+    if (!authLoading && user && teamId) {
       fetchTeamDetails();
     }
-  }, [teamId]);
+  }, [teamId, authLoading, user]);
 
   const fetchTeamDetails = async () => {
     if (!teamId) return;
@@ -160,7 +160,7 @@ export default function PlanningSetupPage() {
         scrumMasterId: user?.id
       };
       
-      const response = await authenticatedFetch('/api/planning/sessions', {
+      const response = await authenticatedFetch('http://localhost:8080/api/planning/sessions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -195,15 +195,24 @@ export default function PlanningSetupPage() {
     }
   };
 
-  if (isLoading) {
+  // Show loading screen while authentication is loading or while loading team details
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <RefreshCw className="h-16 w-16 text-blue-500 mx-auto mb-4 animate-spin" />
-          <p className="text-gray-600">Loading team details...</p>
+          <p className="text-gray-600">
+            {authLoading ? 'Authenticating...' : 'Loading team details...'}
+          </p>
         </div>
       </div>
     );
+  }
+
+  // Redirect to login if not authenticated
+  if (!user) {
+    router.push('/login');
+    return null;
   }
 
   return (

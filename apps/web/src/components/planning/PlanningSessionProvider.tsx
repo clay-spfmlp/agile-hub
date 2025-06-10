@@ -31,6 +31,10 @@ const PlanningContext = createContext<{
     revealVotes: () => void;
     resetVoting: () => void;
     selectStory: (storyId: string) => void;
+    createStory: (story: { title: string; description?: string; acceptance?: string }) => void;
+    updateStory: (storyId: string, updates: { title?: string; description?: string; acceptance?: string }) => void;
+    startVoting: (storyId: string) => void;
+    stopVoting: () => void;
   };
 } | null>(null);
 
@@ -170,6 +174,46 @@ export function PlanningSessionProvider({ children }: { children: React.ReactNod
         socket.emit('planning:story_selected', {
           sessionId: state.session.id,
           storyId
+        });
+      }
+    },
+    
+    createStory: (story: { title: string; description?: string; acceptance?: string }) => {
+      if (socket && state.session) {
+        socket.emit('planning:story_created', {
+          sessionId: state.session.id,
+          story: {
+            ...story,
+            priority: 'MEDIUM' as const,
+            status: 'READY' as const
+          }
+        });
+      }
+    },
+    
+    updateStory: (storyId: string, updates: { title?: string; description?: string; acceptance?: string }) => {
+      if (socket && state.session) {
+        socket.emit('planning:story_updated', {
+          sessionId: state.session.id,
+          storyId,
+          updates
+        });
+      }
+    },
+    
+    startVoting: (storyId: string) => {
+      if (socket && state.session) {
+        socket.emit('planning:voting_started', {
+          sessionId: state.session.id,
+          storyId
+        });
+      }
+    },
+    
+    stopVoting: () => {
+      if (socket && state.session) {
+        socket.emit('planning:voting_stopped', {
+          sessionId: state.session.id
         });
       }
     }

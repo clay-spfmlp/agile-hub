@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Button } from '@repo/ui/components/base/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/components/base/card';
 import { Badge } from '@repo/ui/components/base/badge';
-import { Users, Zap, Target, Clock, ArrowRight, Star } from 'lucide-react';
+import { Users, Zap, Target, Clock, ArrowRight, Star, Hash } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -25,7 +25,7 @@ export default function Home() {
               Make estimation engaging, collaborative, and surprisingly enjoyable for your entire agile team.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-lg px-8 py-4">
                 <Link href="/register" className="flex items-center gap-2">
                   Get Started Free
@@ -37,6 +37,22 @@ export default function Home() {
                   Sign In
                 </Link>
               </Button>
+              <Button variant="outline" size="lg" className="text-lg px-8 py-4 border-green-300 text-green-700 hover:bg-green-50">
+                <Link href="/planning/join" className="flex items-center gap-2">
+                  <Hash className="h-5 w-5" />
+                  Join Session
+                </Link>
+              </Button>
+            </div>
+
+            {/* Quick join info section */}
+            <div className="mb-8 p-4 bg-green-50 border border-green-200 rounded-lg max-w-md mx-auto">
+              <p className="text-sm text-green-800 font-medium mb-2">
+                Got a room code? Join instantly!
+              </p>
+              <p className="text-xs text-green-600">
+                No account needed - just your name and the room code from your Scrum Master
+              </p>
             </div>
 
             <div className="flex items-center justify-center gap-8 text-sm text-gray-500">

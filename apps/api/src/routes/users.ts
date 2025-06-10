@@ -2,8 +2,8 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { db } from '@repo/database';
-import { users, teams, teamMembers, teamScrumMasters, votes } from '@repo/database';
-import { eq, inArray } from 'drizzle-orm';
+import { users, teams, teamMembers, teamScrumMasters, votes, planningSessions, stories } from '@repo/database';
+import { eq, inArray, count, isNotNull, and, sql } from 'drizzle-orm';
 import { authenticateToken, requireAdmin } from '../middleware/auth';
 import { ApiError } from '../middleware/errorHandler';
 
@@ -465,6 +465,99 @@ router.delete('/:id', authenticateToken, requireAdmin, async (req, res, next) =>
       message: 'User and all associated data deleted successfully'
     });
   } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/users/stats - Get admin dashboard statistics (Admin only)
+router.get('/stats', authenticateToken, requireAdmin, async (req, res, next) => {
+  try {
+    // Get total users count
+    const totalUsersResult = await db
+      .select({ count: count() })
+      .from(users);
+    
+    // Get users by role
+    const usersByRoleResult = await db
+      .select({ 
+        role: users.role,
+        count: count()
+      })
+      .from(users)
+      .groupBy(users.role);
+
+    // Get total teams count
+    const totalTeamsResult = await db
+      .select({ count: count() })
+      .from(teams);
+
+    // Get teams with/without scrum masters
+    const teamsWithScrumMasterResult = await db
+      .select({ count: count() })
+      .from(teams)
+      .where(isNotNull(teams.scrumMasterId));
+
+    // Get total team members
+    const totalMembersResult = await db
+      .select({ count: count() })
+      .from(teamMembers);
+
+    // Get planning sessions count
+    const totalSessionsResult = await db
+      .select({ count: count() })
+      .from(planningSessions);
+
+    // Get active sessions (recent ones)
+    const activeSessionsResult = await db
+      .select({ count: count() })
+      .from(planningSessions)
+      .where(
+        and(
+          eq(planningSessions.status, 'ACTIVE'),
+          // Sessions created in the last 24 hours
+          sql`${planningSessions.createdAt} > NOW() - INTERVAL '24 hours'`
+        )
+      );
+
+    // Get total stories and votes
+    const totalStoriesResult = await db
+      .select({ count: count() })
+      .from(stories);
+
+    const totalVotesResult = await db
+      .select({ count: count() })
+      .from(votes);
+
+    const stats = {
+      users: {
+        total: totalUsersResult[0].count,
+        byRole: usersByRoleResult.reduce((acc, item) => {
+          acc[item.role] = item.count;
+          return acc;
+        }, {} as Record<string, number>)
+      },
+      teams: {
+        total: totalTeamsResult[0].count,
+        withScrumMaster: teamsWithScrumMasterResult[0].count,
+        withoutScrumMaster: totalTeamsResult[0].count - teamsWithScrumMasterResult[0].count,
+        totalMembers: totalMembersResult[0].count,
+        avgMembersPerTeam: totalTeamsResult[0].count > 0 
+          ? Math.round(totalMembersResult[0].count / totalTeamsResult[0].count) 
+          : 0
+      },
+      sessions: {
+        total: totalSessionsResult[0].count,
+        active: activeSessionsResult[0].count
+      },
+      stories: {
+        total: totalStoriesResult[0].count,
+        totalVotes: totalVotesResult[0].count
+      }
+    };
+
+    res.json(stats);
+  } catch (error) {
+    console.error('Error fetching admin stats:', error);
     next(error);
   }
 });
