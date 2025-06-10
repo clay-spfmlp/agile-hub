@@ -5,11 +5,21 @@ import { eq } from 'drizzle-orm';
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+    const userId = parseInt(id);
+    
+    if (isNaN(userId)) {
+      return NextResponse.json(
+        { error: 'Invalid user ID' },
+        { status: 400 }
+      );
+    }
+
     const body = await request.json();
-    const { role, teamId } = body;
+    const { role } = body;
 
     // Validate required fields
     if (!role) {
@@ -24,9 +34,8 @@ export async function PATCH(
       .update(users)
       .set({
         role,
-        teamId: teamId || null,
       })
-      .where(eq(users.id, params.id))
+      .where(eq(users.id, userId))
       .returning();
 
     if (!updatedUser) {
@@ -48,12 +57,22 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+    const userId = parseInt(id);
+    
+    if (isNaN(userId)) {
+      return NextResponse.json(
+        { error: 'Invalid user ID' },
+        { status: 400 }
+      );
+    }
+
     const [deletedUser] = await db
       .delete(users)
-      .where(eq(users.id, params.id))
+      .where(eq(users.id, userId))
       .returning();
 
     if (!deletedUser) {

@@ -19,10 +19,10 @@ export async function GET() {
     ]);
 
     return NextResponse.json({
-      totalUsers: totalUsers[0].count,
-      totalTeams: totalTeams[0].count,
-      activeSessions: activeSessions[0].count,
-      totalStories: totalStories[0].count
+      totalUsers: totalUsers[0]?.count || 0,
+      totalTeams: totalTeams[0]?.count || 0,
+      activeSessions: activeSessions[0]?.count || 0,
+      totalStories: totalStories[0]?.count || 0
     });
   } catch (error) {
     console.error('Error fetching stats:', error);

@@ -37,7 +37,15 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, name, role } = body;
+    const { email, name, role, password } = body;
+
+    // Validate required fields
+    if (!email || !name) {
+      return NextResponse.json(
+        { error: 'Email and name are required' },
+        { status: 400 }
+      );
+    }
 
     // Validate role
     if (role && !['USER', 'SCRUM_MASTER'].includes(role)) {
@@ -52,6 +60,7 @@ export async function POST(request: Request) {
       .values({
         email,
         name,
+        password: password || 'defaultpassword123', // Default password - should be changed on first login
         role: role || 'USER',
       })
       .returning();

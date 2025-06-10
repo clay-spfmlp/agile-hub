@@ -1,16 +1,26 @@
 import { NextResponse } from 'next/server';
-import { db, teams, users } from '@repo/database';
+import { db, teams, teamMembers } from '@repo/database';
 import { eq, count } from 'drizzle-orm';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+    const teamId = parseInt(id);
+    
+    if (isNaN(teamId)) {
+      return NextResponse.json(
+        { error: 'Invalid team ID' },
+        { status: 400 }
+      );
+    }
+
     const team = await db
       .select()
       .from(teams)
-      .where(eq(teams.id, params.id));
+      .where(eq(teams.id, teamId));
 
     if (!team.length) {
       return NextResponse.json(
@@ -21,12 +31,12 @@ export async function GET(
 
     const memberCount = await db
       .select({ count: count() })
-      .from(users)
-      .where(eq(users.teamId, params.id));
+      .from(teamMembers)
+      .where(eq(teamMembers.teamId, teamId));
 
     return NextResponse.json({
       ...team[0],
-      memberCount: memberCount[0].count
+      memberCount: memberCount[0]?.count || 0
     });
   } catch (error) {
     console.error('Error fetching team:', error);
@@ -39,9 +49,19 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+    const teamId = parseInt(id);
+    
+    if (isNaN(teamId)) {
+      return NextResponse.json(
+        { error: 'Invalid team ID' },
+        { status: 400 }
+      );
+    }
+
     const body = await request.json();
     const { name, description, scrumMasterId } = body;
 
@@ -52,7 +72,7 @@ export async function PATCH(
         description,
         scrumMasterId,
       })
-      .where(eq(teams.id, params.id))
+      .where(eq(teams.id, teamId))
       .returning();
 
     if (!updatedTeam.length) {
@@ -64,12 +84,12 @@ export async function PATCH(
 
     const memberCount = await db
       .select({ count: count() })
-      .from(users)
-      .where(eq(users.teamId, params.id));
+      .from(teamMembers)
+      .where(eq(teamMembers.teamId, teamId));
 
     return NextResponse.json({
       ...updatedTeam[0],
-      memberCount: memberCount[0].count
+      memberCount: memberCount[0]?.count || 0
     });
   } catch (error) {
     console.error('Error updating team:', error);
@@ -82,19 +102,28 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // First, remove team association from all users
+    const { id } = await params;
+    const teamId = parseInt(id);
+    
+    if (isNaN(teamId)) {
+      return NextResponse.json(
+        { error: 'Invalid team ID' },
+        { status: 400 }
+      );
+    }
+
+    // First, remove all team memberships
     await db
-      .update(users)
-      .set({ teamId: null })
-      .where(eq(users.teamId, params.id));
+      .delete(teamMembers)
+      .where(eq(teamMembers.teamId, teamId));
 
     // Then delete the team
     const deletedTeam = await db
       .delete(teams)
-      .where(eq(teams.id, params.id))
+      .where(eq(teams.id, teamId))
       .returning();
 
     if (!deletedTeam.length) {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthenticatedFetch } from '@repo/auth/hooks/useAuthenticatedFetch';
 import { useAuth } from '@repo/auth/hooks/useAuth';
@@ -87,7 +87,7 @@ const VOTING_SCALES = {
   }
 };
 
-export default function PlanningSetupPage() {
+function PlanningSetupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
@@ -626,5 +626,24 @@ export default function PlanningSetupPage() {
         )}
       </div>
     </div>
+  );
+}
+
+function PlanningSetupLoading() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+      <div className="text-center">
+        <RefreshCw className="h-16 w-16 text-blue-500 mx-auto mb-4 animate-spin" />
+        <p className="text-gray-600">Loading planning setup...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function PlanningSetupPage() {
+  return (
+    <Suspense fallback={<PlanningSetupLoading />}>
+      <PlanningSetupContent />
+    </Suspense>
   );
 } 

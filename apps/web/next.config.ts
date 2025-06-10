@@ -4,9 +4,6 @@ const nextConfig: NextConfig = {
   // Optimize for Vercel deployment
   transpilePackages: ['@repo/ui', '@repo/auth', '@repo/database'],
   
-  // Output configuration for deployment
-  output: 'standalone',
-  
   // Environment variables that should be available on the client
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
