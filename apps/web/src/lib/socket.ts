@@ -46,17 +46,18 @@ export type SocketEventHandlers = {
 let socket: Socket | null = null;
 
 // Initialize socket connection
-export function initSocket(url: string = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001') {
+export function initSocket(url: string = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:8080'): Socket {
   if (!socket) {
     socket = io(url, {
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
+      timeout: 20000,
     });
 
     socket.on('connect', () => {
-      console.log('Socket connected');
+      console.log('Socket connected to:', url);
     });
 
     socket.on('disconnect', () => {
@@ -72,7 +73,7 @@ export function initSocket(url: string = process.env.NEXT_PUBLIC_SOCKET_URL || '
 }
 
 // Get socket instance
-export function getSocket() {
+export function getSocket(): Socket {
   if (!socket) {
     return initSocket();
   }
@@ -80,43 +81,43 @@ export function getSocket() {
 }
 
 // Join planning session
-export function joinSession(roomCode: string, userData: { name: string; userId?: string; role?: string; isAnonymous?: boolean }) {
+export function joinSession(roomCode: string, userData: { name: string; userId?: string; role?: string; isAnonymous?: boolean }): void {
   const socket = getSocket();
   socket.emit(PLANNING_EVENTS.JOIN_SESSION, { roomCode, ...userData });
 }
 
 // Cast vote
-export function castVote(sessionId: string, storyId: string, vote: { value: string; confidence?: number }) {
+export function castVote(sessionId: string, storyId: string, vote: { value: string; confidence?: number }): void {
   const socket = getSocket();
   socket.emit(PLANNING_EVENTS.VOTE_CAST, { sessionId, storyId, vote });
 }
 
 // Reveal votes (Scrum Master only)
-export function revealVotes(sessionId: string) {
+export function revealVotes(sessionId: string): void {
   const socket = getSocket();
   socket.emit(PLANNING_EVENTS.VOTES_REVEALED, { sessionId });
 }
 
 // Reset voting
-export function resetVoting(sessionId: string) {
+export function resetVoting(sessionId: string): void {
   const socket = getSocket();
   socket.emit(PLANNING_EVENTS.VOTING_RESET, { sessionId });
 }
 
 // Select story
-export function selectStory(sessionId: string, storyId: string) {
+export function selectStory(sessionId: string, storyId: string): void {
   const socket = getSocket();
   socket.emit(PLANNING_EVENTS.STORY_SELECTED, { sessionId, storyId });
 }
 
 // Leave session
-export function leaveSession(roomCode: string) {
+export function leaveSession(roomCode: string): void {
   const socket = getSocket();
   socket.emit(PLANNING_EVENTS.LEAVE_SESSION, { roomCode });
 }
 
 // Disconnect socket
-export function disconnectSocket() {
+export function disconnectSocket(): void {
   if (socket) {
     socket.disconnect();
     socket = null;

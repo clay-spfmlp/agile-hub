@@ -169,8 +169,8 @@ export function setupPlanningSocket(io: SocketIOServer) {
       }
     });
 
-    // Reveal votes (with corrected event name)
-    socket.on('planning:votes_revealed', (data: { sessionId: string }) => {
+    // Reveal votes (with corrected event name and parameters)
+    socket.on('planning:votes_revealed', (data: { sessionId: string; storyId?: string }) => {
       try {
         if (!socket.roomCode) {
           socket.emit('error', { message: 'Not joined to a session' });
@@ -183,9 +183,12 @@ export function setupPlanningSocket(io: SocketIOServer) {
           return;
         }
 
+        // Use current story ID if not provided
+        const storyId = data.storyId || session.currentStoryId;
+        
         // Get votes for the story
         const storyVotes = Object.values(session.votes || {}).filter((vote: any) => 
-          vote.storyId === data.storyId
+          vote.storyId === storyId
         );
 
         // Update session state
@@ -193,7 +196,7 @@ export function setupPlanningSocket(io: SocketIOServer) {
 
         // Broadcast votes to all participants
         io.to(socket.roomCode).emit('planning:votes_revealed', {
-          storyId: data.storyId,
+          storyId: storyId,
           votes: storyVotes,
           session: {
             ...session,
@@ -201,7 +204,7 @@ export function setupPlanningSocket(io: SocketIOServer) {
           }
         });
 
-        console.log(`Votes revealed for story ${data.storyId} in room ${socket.roomCode}`);
+        console.log(`Votes revealed for story ${storyId} in room ${socket.roomCode}`);
       } catch (error) {
         console.error('Error revealing votes:', error);
         socket.emit('error', { message: 'Failed to reveal votes' });
